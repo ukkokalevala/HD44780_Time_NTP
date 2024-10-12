@@ -1,0 +1,62 @@
+#include <WiFi.h>
+#include <WiFiUdp.h>
+#include <NTPClient.h>
+#include <LiquidCrystal.h>
+// Include the secrets file
+#include "secrets.h"   // Ensure this file is in the same directory as your .ino file
+
+// Pin connections for the LCD
+const int rs = 4;
+const int en = 5;
+const int d4 = 18;
+const int d5 = 19;
+const int d6 = 20;
+const int d7 = 21;
+
+// Initialize the LCD
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+
+// NTP client setup
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP, "pool.ntp.org", 7200, 60000);  // UTC+2, sync every 60s
+
+void setup() {
+  // Start serial communication for debugging
+  Serial.begin(115200);
+
+  // Initialize the LCD (16x2)
+  lcd.begin(16, 2);
+  lcd.print("Connecting...");
+
+  // Connect to Wi-Fi using the credentials from secrets.h
+  WiFi.begin(SECRET_SSID, SECRET_PASS);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+    lcd.setCursor(0, 1);
+    lcd.print("Connecting...");
+  }
+  Serial.println("Connected to WiFi");
+  lcd.clear();
+  lcd.print("WiFi connected!");
+
+  // Initialize the NTP client
+  timeClient.begin();
+}
+
+void loop() {
+  // Update the time
+  timeClient.update();
+
+  // Get the formatted time as HH:MM:SS
+  String formattedTime = timeClient.getFormattedTime();
+
+  // Display time on the LCD
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Time:");
+  lcd.setCursor(0, 1);
+  lcd.print(formattedTime);
+
+  delay(1000);  // Update every second
+}
